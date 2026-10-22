@@ -1,6 +1,8 @@
 #pragma once
 
+#include <cstddef>
 #include <cstdint>
+#include <queue>
 #include <string>
 #include <string_view>
 
@@ -23,12 +25,13 @@ public:
 
 protected:
   // Please add any additional state to the ByteStream here, and not to the Writer and Reader interfaces.
-  uint64_t capacity_; // 容量
-  bool error_ {}; // 是否有错误
-  std::string buffer_ {}; // 缓冲区
-  bool closed_ {};  // 是否关闭写端（写端结束）
-  uint64_t bytes_pushed_ {};  // 累计写入的字节数
-  uint64_t bytes_popped_ {};  // 累计读取的字节数
+  uint64_t capacity_;                 // 容量
+  bool error_ {};                     // 是否有错误
+  std::queue<std::string> buffer_ {}; // std::queue<std::string> 缓冲区
+  std::uint64_t offset_ {}; // queue 队列内单独块内偏移量，因为一次 pop 要不直接读走当前块或者不读取
+  bool closed_ {};           // 是否关闭写端（写端结束）
+  uint64_t bytes_pushed_ {}; // 累计写入的字节数
+  uint64_t bytes_popped_ {}; // 累计读取的字节数
 };
 
 class Writer : public ByteStream
