@@ -74,7 +74,7 @@ void NetworkInterface::send_datagram( InternetDatagram dgram, const Address& nex
 //! \param[in] frame the incoming Ethernet frame
 void NetworkInterface::recv_frame( EthernetFrame frame )
 {
-  // 接收帧，首先判断是不是发给自己的或者是不是ARP请求，如果不是理应丢弃
+  // 接收帧，首先判断是不是发给自己的或者是不是广播请求，如果不是理应丢弃
   if ( frame.header.dst != ethernet_address_ && frame.header.dst != ETHERNET_BROADCAST )
     return;
 
@@ -82,7 +82,8 @@ void NetworkInterface::recv_frame( EthernetFrame frame )
   if ( frame.header.type == EthernetHeader::TYPE_ARP ) {
     // ARP
     ARPMessage acked_arp;
-    parse( acked_arp, frame.payload ); // 还原ARP请求
+    if ( not parse( acked_arp, frame.payload ) ) // 还原ARP消息，解析失败直接丢弃
+      return;
 
     arp_table_[acked_arp.sender_ip_address]
       = make_pair( acked_arp.sender_ethernet_address, current_time_ ); // 接收到ARP消息就存入ARP缓存
@@ -97,7 +98,7 @@ void NetworkInterface::recv_frame( EthernetFrame frame )
         transmit( pending_frame );
       }
       pending_datagrams_.erase( acked_arp.sender_ip_address );
-      // 如果这次就是答复ARP请求，那么可以结束了
+      // 如果这次就是答复ARP的请求，那么可以结束了
       if ( acked_arp.opcode == ARPMessage::OPCODE_REPLY )
         return;
     }
@@ -122,11 +123,11 @@ void NetworkInterface::recv_frame( EthernetFrame frame )
     } else {
       return;
     }
-  } else {
+  } else if ( frame.header.type == EthernetHeader::TYPE_IPv4 ) {
     // IPv4请求
     InternetDatagram dgram;
-    parse( dgram, frame.payload ); // 还原数据报
-    datagrams_received_.push( dgram );
+    if ( parse( dgram, frame.payload ) ) // 还原数据报，解析失败直接丢弃
+      datagrams_received_.push( dgram );
   }
 }
 
