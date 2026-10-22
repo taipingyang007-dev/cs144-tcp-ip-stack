@@ -40,8 +40,7 @@ void TCPSender::push( const TransmitFunction& transmit )
       = std::min( { TCPConfig::MAX_PAYLOAD_SIZE, window_room - msg.SYN, input_.reader().bytes_buffered() } );
 
     // 获取payload值，并清理input_
-    msg.payload = string( input_.reader().peek().substr( 0, len ) );
-    input_.reader().pop( len );
+    read( input_.reader(), len, msg.payload );
 
     if ( input_.reader().is_finished() && !fin_sent_ && window_room > msg.sequence_length() ) {
       msg.FIN = true;
