@@ -56,12 +56,12 @@ void Reassembler::insert( uint64_t first_index,
   auto it = buffer_.lower_bound( start ); // 找到第一个起始位置不小于start的片段
 
   // 左
-  if ( it != buffer_.begin() ) // 如果it不是第一个元素，说明可能有片段在start之前，检查是否相邻或重叠
+  if ( it != buffer_.begin() ) // 如果it不是第一个元素，说明有片段在start之前，检查是否相邻或重叠
   {
     auto prev_it = std::prev( it ); // prev是it的前一个元素
 
     // 判断合并条件，相邻或者重叠
-    if ( prev_it->first + prev_it->second.size() >= start && start + data.size() >= prev_it->first ) {
+    if ( prev_it->first + prev_it->second.size() >= start ) {
       // 求重叠长度
       uint64_t overlap_len = min( prev_it->first + prev_it->second.size(), start + data.size() ) - start;
 
@@ -88,27 +88,24 @@ void Reassembler::insert( uint64_t first_index,
 
   // 右
   while ( it != buffer_.end() && it->first <= start + data.size() ) {
-    // 判断合并条件，相邻或者重叠
-    if ( start + data.size() >= it->first && it->first + it->second.size() >= start ) {
-      // 找重叠位置和重叠长度
-      // 重叠开始的位置是it->first
-      uint64_t overlap_len = min( it->first + it->second.size(), start + data.size() ) - it->first;
-      // 如果重叠部分为空，说明相邻但不重叠，直接合并
-      if ( overlap_len == 0 ) {
-        data += it->second;
-      }
-      // 如果重叠部分大于等于it->second.size()，说明it完全被覆盖了，直接删除it
-      else if ( overlap_len >= it->second.size() ) {
-        // 直接删除it，不需要更新data，因为it完全被覆盖了
-      }
-      // 否则说明it部分被覆盖了，更新it->second为未被覆盖的部分
-      else {
-        it->second = it->second.substr( overlap_len, it->second.size() - overlap_len );
-        data += it->second;
-      }
-      it = buffer_.erase( it ); // 删除it并返回下一个迭代器
-    } else
-      break; // 不相邻或重叠，可直接写入
+    // 一定有合并条件，相邻或者重叠
+    // 找重叠位置和重叠长度
+    // 重叠开始的位置是it->first
+    uint64_t overlap_len = min( it->first + it->second.size(), start + data.size() ) - it->first;
+    // 如果重叠部分为空，说明相邻但不重叠，直接合并
+    if ( overlap_len == 0 ) {
+      data += it->second;
+    }
+    // 如果重叠部分大于等于it->second.size()，说明it完全被覆盖了，直接删除it
+    else if ( overlap_len >= it->second.size() ) {
+      // 直接删除it，不需要更新data，因为it完全被覆盖了
+    }
+    // 否则说明it部分被覆盖了，更新it->second为未被覆盖的部分
+    else {
+      it->second = it->second.substr( overlap_len, it->second.size() - overlap_len );
+      data += it->second;
+    }
+    it = buffer_.erase( it ); // 删除it并返回下一个迭代器
   }
 
   // 将本次可写入字符串写入Reassembler缓冲区

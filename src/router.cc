@@ -51,8 +51,8 @@ void Router::route()
       }
       // 找到route_map中prefix_length最大的一条路由并发送，如果没有就丢弃
       if ( best_route != nullptr ) {
-        interface_->datagrams_received().front().header.ttl--;
         InternetDatagram dgram = interface_->datagrams_received().front();
+        dgram.header.ttl--;
         dgram.header.compute_checksum();
         Address actual_next_hop
           = best_route->next_hop.has_value()
