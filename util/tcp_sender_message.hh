@@ -23,6 +23,7 @@
 
 struct TCPSenderMessage
 {
+  // 这段的起始序号；带SYN时这就是ISN本身（SYN 的序号是0 ， 0 + isn = isn），不带SYN时是payload第一个字节的序号
   Wrap32 seqno { 0 };
   bool SYN { false };
   Buffer payload {};

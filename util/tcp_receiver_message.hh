@@ -19,7 +19,7 @@
 
 struct TCPReceiverMessage
 {
-  std::optional<Wrap32> ackno {};
+  std::optional<Wrap32> ackno {}; // 没收到SYN时是nullopt
   uint16_t window_size {};
   bool RST { false };
 };
